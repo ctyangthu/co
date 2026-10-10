@@ -1,0 +1,6 @@
+{
+  "name": "東海大學計算機組織 AI 助教",
+  "description": "東海大學計算機組織專屬 AI 助教，運用蘇格拉底式提問法引導學生深入思考 CPU 架構、管線化、快取階層與指令集邏輯。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
