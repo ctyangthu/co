@@ -1,22 +1,28 @@
 import React from 'react';
-import { Download, BookOpen, Trash2, HelpCircle } from 'lucide-react';
+import { Download, BookOpen, Trash2, HelpCircle, BarChart3 } from 'lucide-react';
 
 interface HeaderProps {
   onOpenExport: () => void;
   onOpenGuide: () => void;
   onToggleReference: () => void;
+  onOpenProgress: () => void;
   onClearChat: () => void;
   messageCount: number;
   isReferenceOpen: boolean;
+  coveredUnitsCount: number;
+  totalUnitsCount: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenExport,
   onOpenGuide,
   onToggleReference,
+  onOpenProgress,
   onClearChat,
   messageCount,
   isReferenceOpen,
+  coveredUnitsCount,
+  totalUnitsCount,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-[#0c2340] border-b border-[#1e3a5f] text-white shadow-md">
@@ -43,7 +49,20 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            {/* Visual Learning Progress Tracker Button */}
+            <button
+              onClick={onOpenProgress}
+              className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-amber-200 bg-[#16365f] hover:bg-[#1e467a] border border-[#2d588c] rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400"
+              title="查看當前對話涉獵之計組單元廣度與深度分析"
+            >
+              <BarChart3 className="w-3.5 h-3.5 mr-1 text-amber-300" />
+              <span className="hidden sm:inline">學習進度</span>
+              <span className="ml-1.5 px-1.5 py-0.2 bg-amber-400/20 text-amber-300 text-[10px] rounded-full font-bold">
+                {coveredUnitsCount}/{totalUnitsCount}
+              </span>
+            </button>
+
             {/* Socratic Guide Button */}
             <button
               onClick={onOpenGuide}
@@ -62,13 +81,13 @@ export const Header: React.FC<HeaderProps> = ({
                   ? 'bg-amber-500/20 text-amber-200 border-amber-400/50'
                   : 'text-slate-200 bg-[#152e4d] hover:bg-[#1e3e68] border-[#264a77]'
               }`}
-              title="快速查閱會計恆等式與借貸速查表"
+              title="查閱 CPU 公式與 5 級管線速查手冊"
             >
               <BookOpen className="w-3.5 h-3.5 mr-1 text-amber-300" />
               <span className="hidden sm:inline">計組速查</span>
             </button>
 
-            {/* Download Q&A Record Button - Explicit Requirement */}
+            {/* Download Q&A Record Button */}
             <button
               onClick={onOpenExport}
               disabled={messageCount === 0}
@@ -80,7 +99,8 @@ export const Header: React.FC<HeaderProps> = ({
               title={messageCount === 0 ? '目前尚無對話紀錄可供下載' : '下載目前問答紀錄 (.txt / .md)'}
             >
               <Download className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
-              <span>下載問答紀錄</span>
+              <span className="hidden md:inline">下載問答紀錄</span>
+              <span className="md:hidden">匯出</span>
               {messageCount > 0 && (
                 <span className="ml-1.5 bg-[#0c2340]/25 text-[#0c2340] text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                   {messageCount}

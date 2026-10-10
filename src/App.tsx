@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Send, Sparkles, RefreshCw, AlertCircle, ArrowDown } from 'lucide-react';
 import { Header } from './components/Header';
 import { ChatMessageItem } from './components/ChatMessageItem';
@@ -6,6 +6,8 @@ import { PromptSuggestions } from './components/PromptSuggestions';
 import { ExportModal } from './components/ExportModal';
 import { SocraticGuideModal } from './components/SocraticGuideModal';
 import { ComputerOrgReferenceDrawer } from './components/ComputerOrgReferenceDrawer';
+import { ProgressTrackerBanner } from './components/ProgressTrackerBanner';
+import { analyzeProgressFromMessages } from './utils/progressAnalyzer';
 import { Message, PromptTopic } from './types';
 
 const STORAGE_KEY = 'thu_computer_org_ai_chat_v1';
@@ -29,10 +31,16 @@ export default function App() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
+  const [drawerTab, setDrawerTab] = useState<'progress' | 'reference'>('progress');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Compute Learning Progress & Depth Summary in real time
+  const progressSummary = useMemo(() => {
+    return analyzeProgressFromMessages(messages);
+  }, [messages]);
 
   // Persist messages to localStorage
   useEffect(() => {
@@ -239,10 +247,25 @@ export default function App() {
       <Header
         onOpenExport={() => setIsExportOpen(true)}
         onOpenGuide={() => setIsGuideOpen(true)}
-        onToggleReference={() => setIsReferenceOpen((prev) => !prev)}
+        onToggleReference={() => {
+          setDrawerTab('reference');
+          setIsReferenceOpen((prev) => !prev);
+        }}
+        onOpenProgress={() => {
+          setDrawerTab('progress');
+          setIsReferenceOpen(true);
+        }}
         onClearChat={handleClearChat}
         messageCount={messages.length}
         isReferenceOpen={isReferenceOpen}
+        coveredUnitsCount={progressSummary.coveredUnitsCount}
+        totalUnitsCount={progressSummary.totalUnitsCount}
+      />
+
+      {/* Visual Learning Progress Tracker Banner (Top of Chat Area) */}
+      <ProgressTrackerBanner
+        summary={progressSummary}
+        onAskTopic={(prompt) => handleSendMessage(prompt)}
       />
 
       {/* Main Conversation Container */}
@@ -382,10 +405,13 @@ export default function App() {
         </div>
       </main>
 
-      {/* Computer Organization Reference Drawer */}
+      {/* Computer Organization Reference & Progress Drawer */}
       <ComputerOrgReferenceDrawer
         isOpen={isReferenceOpen}
         onClose={() => setIsReferenceOpen(false)}
+        summary={progressSummary}
+        onAskTopic={(prompt) => handleSendMessage(prompt)}
+        defaultTab={drawerTab}
       />
 
       {/* Socratic Guide Modal */}

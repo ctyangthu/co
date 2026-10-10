@@ -1,4 +1,5 @@
 import { Message, ExportFormat } from '../types';
+import { analyzeProgressFromMessages } from './progressAnalyzer';
 
 export function formatConversationForExport(messages: Message[], format: ExportFormat): string {
   const exportDate = new Date().toLocaleString('zh-TW', {
@@ -11,12 +12,38 @@ export function formatConversationForExport(messages: Message[], format: ExportF
     second: '2-digit',
   });
 
+  const progress = analyzeProgressFromMessages(messages);
+
   if (format === 'md') {
     let md = `# 東海大學計算機組織 AI 助教 - 問答研習紀錄\n\n`;
     md += `> **匯出時間**：${exportDate}  \n`;
     md += `> **導引模式**：蘇格拉底式提問法（啟發式引導、破除計算機架構盲點）  \n`;
-    md += `> **對話總數**：共 ${messages.length} 則問答對話  \n\n`;
+    md += `> **對話總數**：共 ${messages.length} 則問答對話  \n`;
+    md += `> **掌握度評估**：${progress.overallLevelTitle}  \n\n`;
     md += `---\n\n`;
+
+    md += `## 📊 計算機組織單元涉獵與掌握度分析\n\n`;
+    md += `- **學習廣度 (Breadth)**：涵蓋 **${progress.coveredUnitsCount} / ${progress.totalUnitsCount}** 核心單元 (${progress.breadthPercentage}%)\n`;
+    md += `- **平均深度 (Depth)**：**${progress.averageDepthPercentage}%**\n`;
+    md += `- **助教學習建議**：${progress.studyAdvice}\n\n`;
+
+    md += `### 各核心單元涉獵明細：\n\n`;
+    progress.unitProgressList.forEach((unit) => {
+      const depthBadge =
+        unit.depthLevel === 3
+          ? '【架構精通 ★★★】'
+          : unit.depthLevel === 2
+          ? '【深入推導 ★★☆】'
+          : unit.depthLevel === 1
+          ? '【初步探討 ★☆☆】'
+          : '【尚未涉獵 ☆☆☆】';
+      md += `- **${unit.name} (${unit.nameEn})**：${depthBadge} (討論次數: ${unit.mentionsCount})\n`;
+      if (unit.unlockedConcepts.length > 0) {
+        md += `  - 已涉獵概念：${unit.unlockedConcepts.join('、')}\n`;
+      }
+    });
+
+    md += `\n---\n\n`;
     md += `## 💻 對話歷程紀錄\n\n`;
 
     messages.forEach((msg, idx) => {
@@ -45,7 +72,26 @@ export function formatConversationForExport(messages: Message[], format: ExportF
     txt += `匯出時間：${exportDate}\n`;
     txt += `導引模式：蘇格拉底式提問法（不直接給予數值答案，引導深度思考）\n`;
     txt += `對話總數：共 ${messages.length} 則紀錄\n`;
+    txt += `掌握評估：${progress.overallLevelTitle}\n`;
+    txt += `學習廣度：涵蓋 ${progress.coveredUnitsCount} / ${progress.totalUnitsCount} 單元 (${progress.breadthPercentage}%)\n`;
+    txt += `平均深度：${progress.averageDepthPercentage}%\n`;
+    txt += `助教建議：${progress.studyAdvice}\n`;
     txt += `-------------------------------------------------------\n\n`;
+
+    txt += `【單元涉獵明細】\n`;
+    progress.unitProgressList.forEach((unit) => {
+      const depthBadge =
+        unit.depthLevel === 3
+          ? '[架構精通]'
+          : unit.depthLevel === 2
+          ? '[深入推導]'
+          : unit.depthLevel === 1
+          ? '[初步探討]'
+          : '[尚未涉獵]';
+      txt += `• ${unit.name} (${unit.nameEn}): ${depthBadge} (提及 ${unit.mentionsCount} 次)\n`;
+    });
+
+    txt += `\n-------------------------------------------------------\n\n`;
 
     messages.forEach((msg, idx) => {
       const roleLabel = msg.role === 'user' ? '【學生發問】' : '【AI 助教學長姐引導】';
